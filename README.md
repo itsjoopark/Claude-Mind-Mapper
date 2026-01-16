@@ -1,2 +1,4 @@
 # Claude
-Claude but with a mind map feature (design concept)
+A Design Concept of Claude including... 
+> Graph View 
+> Accessibility features for Dyslexic users (more to come)
