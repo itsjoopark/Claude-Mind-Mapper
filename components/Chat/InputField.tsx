@@ -1,13 +1,36 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Clock, ChevronDown, ArrowUp } from "lucide-react";
+import Image from "next/image";
+import {
+  Plus,
+  Clock,
+  ChevronDown,
+  ArrowUp,
+  Paperclip,
+  FolderPlus,
+  Search,
+  Globe,
+  Feather,
+  Grid3X3,
+  ChevronRight,
+  Check,
+} from "lucide-react";
 import { useChat } from "@/context/ChatContext";
 
 export default function InputField() {
   const [input, setInput] = useState("");
-  const { sendMessage, selectedModel, setSelectedModel, isLoading } = useChat();
+  const {
+    sendMessage,
+    selectedModel,
+    setSelectedModel,
+    isLoading,
+    dyslexiaMode,
+    toggleDyslexiaMode,
+  } = useChat();
   const [showModelDropdown, setShowModelDropdown] = useState(false);
+  const [showPlusMenu, setShowPlusMenu] = useState(false);
+  const [showAccessibilityMenu, setShowAccessibilityMenu] = useState(false);
 
   const models = ["Opus 4.5", "Sonnet 3.5", "Haiku 3.0"];
 
@@ -46,16 +69,106 @@ export default function InputField() {
         {/* Bottom Bar */}
         <div className="flex items-center justify-between px-4 pb-4">
           {/* Left Controls */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 relative">
             <button
               type="button"
+              onClick={() => setShowPlusMenu((prev) => !prev)}
               className="p-2 rounded-xl hover:bg-sidebar transition-colors text-secondary"
+              aria-haspopup="menu"
+              aria-expanded={showPlusMenu}
             >
               <Plus size={22} strokeWidth={1.5} />
             </button>
+            {showPlusMenu && (
+              <div className="absolute left-0 bottom-full mb-3 w-[260px] rounded-2xl border border-border bg-white shadow-lg z-20 p-2">
+                <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-[15px] text-primary hover:bg-sidebar/50 transition-colors">
+                  <Paperclip size={18} className="text-secondary" />
+                  <span className="flex-1 text-left">Add files or photos</span>
+                </button>
+                <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-[15px] text-primary hover:bg-sidebar/50 transition-colors">
+                  <FolderPlus size={18} className="text-secondary" />
+                  <span className="flex-1 text-left">Add to project</span>
+                  <ChevronRight size={16} className="text-secondary" />
+                </button>
+                <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-[15px] text-primary hover:bg-sidebar/50 transition-colors">
+                  <Image
+                    src="/notion_logo.png"
+                    alt="Notion"
+                    width={18}
+                    height={18}
+                    className="text-secondary"
+                  />
+                  <span className="flex-1 text-left">Add from Notion</span>
+                  <ChevronRight size={16} className="text-secondary" />
+                </button>
+                <div className="my-2 h-px bg-border/70" />
+                <button
+                  type="button"
+                  onClick={() => setShowAccessibilityMenu((prev) => !prev)}
+                  className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-[15px] text-primary hover:bg-sidebar/50 transition-colors"
+                >
+                  <Image
+                    src="/ada-accessibility-icon.png"
+                    alt="Accessibility"
+                    width={18}
+                    height={18}
+                    className="text-secondary"
+                  />
+                  <span className="flex-1 text-left">Accessibility</span>
+                  <ChevronRight size={16} className="text-secondary" />
+                </button>
+                <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-[15px] text-primary hover:bg-sidebar/50 transition-colors">
+                  <Search size={18} className="text-secondary" />
+                  <span className="flex-1 text-left">Research</span>
+                </button>
+                <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-[15px] text-primary hover:bg-sidebar/50 transition-colors">
+                  <Globe size={18} className="text-[#2B7CE9]" />
+                  <span className="flex-1 text-left text-[#2B7CE9]">Web search</span>
+                  <Check size={16} className="text-[#2B7CE9]" />
+                </button>
+                <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-[15px] text-primary hover:bg-sidebar/50 transition-colors">
+                  <Feather size={18} className="text-secondary" />
+                  <span className="flex-1 text-left">Use style</span>
+                  <ChevronRight size={16} className="text-secondary" />
+                </button>
+                <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-[15px] text-primary hover:bg-sidebar/50 transition-colors">
+                  <Grid3X3 size={18} className="text-secondary" />
+                  <span className="flex-1 text-left">Connectors</span>
+                  <ChevronRight size={16} className="text-secondary" />
+                </button>
+              </div>
+            )}
+            {showPlusMenu && showAccessibilityMenu && (
+              <div className="absolute left-[222px] bottom-full mb-3 w-[220px] rounded-2xl border border-border bg-white shadow-lg z-30 p-2">
+                <button
+                  type="button"
+                  onClick={toggleDyslexiaMode}
+                  className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-[15px] transition-colors ${
+                    dyslexiaMode
+                      ? "text-[#2B7CE9]"
+                      : "text-primary hover:text-[#2B7CE9]"
+                  }`}
+                >
+                  <span className="flex-1 text-left">Dyslexia-friendly</span>
+                </button>
+                {[
+                  "Large text mode",
+                  "High contrast",
+                  "Reduced motion",
+                  "Color-friendly",
+                ].map((label) => (
+                  <button
+                    key={label}
+                    className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-[15px] text-primary hover:text-[#2B7CE9] transition-colors"
+                  >
+                    <span className="flex-1 text-left">{label}</span>
+                  </button>
+                ))}
+              </div>
+            )}
             <button
               type="button"
-              className="p-2.5 rounded-full bg-blue-50 text-blue-500 hover:bg-blue-100 transition-colors"
+              className="p-2.5 rounded-full bg-background text-secondary hover:bg-sidebar transition-colors"
             >
               <Clock size={18} strokeWidth={2} />
             </button>

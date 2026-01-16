@@ -15,6 +15,12 @@ const signifier = localFont({
   display: "swap",
 });
 
+const openDyslexic = localFont({
+  src: "../opendyslexic-0.92/OpenDyslexic-Regular.otf",
+  variable: "--font-dyslexic",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   title: "Claude",
   description: "AI-powered chatbot with mind mapping capabilities",
@@ -28,7 +34,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${inter.variable} ${signifier.variable} antialiased font-sans`}
+        className={`${inter.variable} ${signifier.variable} ${openDyslexic.variable} antialiased font-sans`}
       >
         <ChatProvider>{children}</ChatProvider>
       </body>

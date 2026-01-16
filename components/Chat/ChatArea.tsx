@@ -21,7 +21,7 @@ export default function ChatArea() {
           </div>
           {/* Input area at bottom when chatting */}
           <div className="px-4 pb-6">
-            <div className="max-w-3xl mx-auto">
+            <div className="max-w-4xl mx-auto">
               <InputField />
             </div>
           </div>

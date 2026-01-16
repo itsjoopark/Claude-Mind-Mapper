@@ -67,7 +67,7 @@ const topicMappings: Record<string, { topic: string; chats: string[] }> = {
 };
 
 export default function GraphView() {
-  const { chats } = useChat();
+  const { chats, selectChat, setViewMode, dyslexiaMode } = useChat();
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 1200, height: 900 });
   const lastSizeRef = useRef({ width: 1200, height: 900 });
@@ -86,6 +86,8 @@ export default function GraphView() {
   const lastMoveRef = useRef<{ x: number; y: number; time: number } | null>(null);
   const inertiaFrameRef = useRef<number | null>(null);
   const [hasMounted, setHasMounted] = useState(false);
+  const didDragRef = useRef(false);
+  const dragStartRef = useRef<{ x: number; y: number } | null>(null);
   
   // Hover state
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
@@ -151,16 +153,16 @@ export default function GraphView() {
         { x: 160, y: -50 },   // Animating text - right
       ],
       "Creative Coding": [
-        { x: 100, y: -120 },  // Cellular automata - top right
-        { x: 220, y: -30 },   // Conway's Game of Life - right
-        { x: 20, y: 100 },    // Face tracking - below
+        { x: 110, y: -130 },  // Cellular automata - top right
+        { x: 220, y: -20 },   // Conway's Game of Life - right
+        { x: 40, y: 140 },    // Face tracking - below (spaced)
       ],
       "LaTeX Formatting": [
         { x: 100, y: -150 },  // Standardize bullet - top right
         { x: -50, y: 130 },   // LaTeX header - below
       ],
       "Side Projects": [
-        { x: 100, y: -100 },  // Fibonacci - top
+        { x: 120, y: -130 },  // Fibonacci - top (spaced)
         { x: -150, y: -40 },  // Productivity tools - left
         { x: 20, y: 140 },    // Personal memory - below
       ],
@@ -255,10 +257,36 @@ export default function GraphView() {
   );
 
   const activeSet = relatedNodeIds(activeNodeId);
+  const hoveredChatNode = hoveredNode ? nodes.find((node) => node.id === hoveredNode) : null;
+  const hoveredChatParentId =
+    hoveredChatNode && hoveredChatNode.type === "chat" ? hoveredChatNode.parentId : null;
 
-  // Handle node click (no navigation in graph mode)
-  const handleNodeClick = (_node: Node, _e: React.MouseEvent) => {
+  const manualChatMap: Record<string, string> = {
+    "claude mind map creation": "Claude's mind mapping capabilit...",
+    "accessibility features": "Claude's accessibility feature gaps",
+    "devouring details summary": "Devouring Details Summary",
+    "pre-pmf versus post-pmf product": "Pre-PMF and post-PMF product ...",
+  };
+
+  // Handle node click (navigate to matching chat)
+  const handleNodeClick = (node: Node, _e: React.MouseEvent) => {
     if (draggedNodeId) return;
+    if (didDragRef.current) return;
+    if (node.type !== "chat") return;
+
+    const normalizedLabel = node.label.toLowerCase();
+    const mappedTitle = manualChatMap[normalizedLabel];
+    const matchedChat =
+      (mappedTitle
+        ? chats.find((chat) => chat.title === mappedTitle)
+        : undefined) ||
+      chats.find((chat) => chat.title.toLowerCase().includes(normalizedLabel)) ||
+      (node.chatId ? chats.find((chat) => chat.id === node.chatId) : undefined);
+
+    if (matchedChat) {
+      selectChat(matchedChat.id);
+      setViewMode("chat");
+    }
   };
 
   // Start dragging a node
@@ -272,6 +300,7 @@ export default function GraphView() {
     }
     velocityRef.current = { x: 0, y: 0 };
     lastMoveRef.current = null;
+    didDragRef.current = false;
     
     const svgRect = containerRef.current?.getBoundingClientRect();
     if (!svgRect) return;
@@ -285,6 +314,7 @@ export default function GraphView() {
       x: mouseX - node.x,
       y: mouseY - node.y,
     });
+    dragStartRef.current = { x: mouseX, y: mouseY };
   };
 
   // Handle mouse move - for both canvas and node dragging
@@ -299,6 +329,14 @@ export default function GraphView() {
       
       const newX = mouseX - dragOffset.x;
       const newY = mouseY - dragOffset.y;
+
+      if (dragStartRef.current) {
+        const dx = mouseX - dragStartRef.current.x;
+        const dy = mouseY - dragStartRef.current.y;
+        if (Math.hypot(dx, dy) > 4) {
+          didDragRef.current = true;
+        }
+      }
 
       const now = performance.now();
       if (lastMoveRef.current) {
@@ -363,6 +401,8 @@ export default function GraphView() {
     if (releasedNodeId) {
       startInertia(releasedNodeId);
     }
+    lastMoveRef.current = null;
+    dragStartRef.current = null;
   };
 
   // Start canvas dragging
@@ -423,7 +463,10 @@ export default function GraphView() {
       >
         <g
           transform={`translate(${transform.x}, ${transform.y})`}
-          style={{ opacity: hasMounted ? 1 : 0, transition: "opacity 400ms ease" }}
+          style={{
+            opacity: hasMounted ? 1 : 0,
+            transition: "opacity 700ms ease-out",
+          }}
         >
           {/* Edges - thin gray lines with gaps from nodes */}
           {edges.map((edge, i) => {
@@ -431,10 +474,13 @@ export default function GraphView() {
             const toNode = nodes.find((n) => n.id === edge.to);
             if (!fromNode || !toNode) return null;
 
-            const isEdgeActive =
-              activeNodeId &&
-              activeSet.has(edge.from) &&
-              activeSet.has(edge.to);
+            const isHoveredEdge =
+              hoveredChatParentId &&
+              hoveredNode &&
+              ((edge.from === hoveredChatParentId && edge.to === hoveredNode) ||
+                (edge.to === hoveredChatParentId && edge.from === hoveredNode));
+            const isSameTreeEdge =
+              hoveredChatParentId && (edge.from === hoveredChatParentId || edge.to === hoveredChatParentId);
 
             const { x1, y1, x2, y2 } = getLineEndpoints(fromNode, toNode);
 
@@ -446,9 +492,15 @@ export default function GraphView() {
                 x2={x2}
                 y2={y2}
                 stroke={
-                  isEdgeActive ? "#E07B54" : activeNodeId ? "#E6E4E0" : "#D4D4D4"
+                  isHoveredEdge
+                    ? "#E07B54"
+                    : isSameTreeEdge
+                      ? "#1A1A1A"
+                      : activeNodeId
+                        ? "#E6E4E0"
+                        : "#D4D4D4"
                 }
-                strokeWidth={isEdgeActive ? 1.5 : 1}
+                strokeWidth={isHoveredEdge || isSameTreeEdge ? 1.5 : 1}
                 style={{ transition: "stroke 0.15s ease, stroke-width 0.15s ease" }}
               />
             );
@@ -489,7 +541,9 @@ export default function GraphView() {
                     textAnchor="middle"
                     dy="0.35em"
                     style={{
-                      fontFamily: "var(--font-signifier), Georgia, serif",
+                      fontFamily: dyslexiaMode
+                        ? "var(--font-dyslexic), var(--font-signifier), Georgia, serif"
+                        : "var(--font-signifier), Georgia, serif",
                       fontSize: "18px",
                       fontWeight: 600,
                       fill: isActive
@@ -509,7 +563,9 @@ export default function GraphView() {
                     textAnchor="middle"
                     dy="0.35em"
                     style={{
-                      fontFamily: "var(--font-inter), system-ui, sans-serif",
+                      fontFamily: dyslexiaMode
+                        ? "var(--font-dyslexic), var(--font-inter), system-ui, sans-serif"
+                        : "var(--font-inter), system-ui, sans-serif",
                       fontSize: "14px",
                       fontWeight: 400,
                       fill: isActive

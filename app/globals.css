@@ -29,6 +29,11 @@ body {
   color: var(--primary);
 }
 
+body.dyslexia-mode {
+  font-family: var(--font-dyslexic), var(--font-inter), system-ui, sans-serif;
+  font-size: calc(1em - 5px);
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
@@ -69,3 +74,4 @@ body {
 .animate-sparkle {
   animation: sparkle 2s ease-in-out infinite;
 }
+
