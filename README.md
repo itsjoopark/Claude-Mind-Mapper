@@ -1,5 +1,7 @@
 # Claude 
-A design concept for the existing Claude desktop interface exploring the following added feature modes. Built using Claude Opus 4.5 and GPT-5.2 Codex. 
+A design concept for the existing Claude desktop interface exploring the following added feature modes. 
+- Built using Claude Opus 4.5 and GPT-5.2 Codex
+- Stack: Next.js 14, React 18, TypeScript, Tailwind CSS, Google + local fonts
 
 # Graph View
 <img width="1704" height="897" alt="Screenshot 2026-01-16 at 1 51 07 PM" src="https://github.com/user-attachments/assets/ad23d967-d2d5-48c3-8b0d-85f214467a83" />
